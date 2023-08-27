@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>PRACH Power Calculator</title>
+<style>
+
+input[type="number"] {
+  width: 60px; /* 調整輸入框寬度，可以根據需要調整數值 */
+}
+
+table {
+  border-collapse: collapse;
+  width: auto;
+  <!--
+  margin: 0 auto; //表格整體置中
+  -->
+  border: 1px solid black;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 4px;
+  text-align: center;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+p {
+  margin: 4px 0;
+}
+</style>
+<script>
+function calculatePRACHPower() {
+  // Get user inputs
+  var μ = parseFloat(document.getElementById("μ").value);
+  var preambleReceivedTargetPower = parseFloat(document.getElementById("preambleReceivedTargetPower").value);
+  var prachConfigurationIndex = parseInt(document.getElementById("prachConfigurationIndex").value);
+  var rachAttempt = parseInt(document.getElementById("rachAttempt").value);
+  var powerRampingStep = parseFloat(document.getElementById("powerRampingStep").value);
+  var pathloss = parseFloat(document.getElementById("pathloss").value);
+
+  // Mapping table for DELTA_PREAMBLE based on prachConfigurationIndex
+  var mappingTable = [
+    { range: "0-27", preambleFormat: "0", deltaPreamble: 0 },
+    { range: "28-33", preambleFormat: "1", deltaPreamble: -3 },
+    { range: "34-39", preambleFormat: "2", deltaPreamble: -6 },
+    { range: "40-66", preambleFormat: "3", deltaPreamble: 0 },
+    { range: "67-86", preambleFormat: "A1", deltaPreamble: 8 + 3 * μ },
+    { range: "87-109", preambleFormat: "A2", deltaPreamble: 5 + 3 * μ },
+    { range: "110-132", preambleFormat: "A3", deltaPreamble: 3 + 3 * μ },
+    { range: "133-144", preambleFormat: "B1", deltaPreamble: 8 + 3 * μ },
+    { range: "145-168", preambleFormat: "B4", deltaPreamble: 3 * μ },
+    { range: "169-188", preambleFormat: "C0", deltaPreamble: 11 + 3 * μ },
+    { range: "189-210", preambleFormat: "C2", deltaPreamble: 5 + 3 * μ },
+    { range: "211-225", preambleFormat: "A1/B1", deltaPreamble: 8 + 3 * μ },
+    { range: "226-240", preambleFormat: "A2/B2", deltaPreamble: 5 + 3 * μ },
+    { range: "241-255", preambleFormat: "A3/B3", deltaPreamble: 3 + 3 * μ },
+    { range: "256-262", preambleFormat: "0", deltaPreamble: 0 }
+  ];
+
+  // Find DELTA_PREAMBLE based on prachConfigurationIndex
+  var DELTA_PREAMBLE;
+  var preambleFormat = "";
+  for (var i = 0; i < mappingTable.length; i++) {
+    var entry = mappingTable[i];
+    var range = entry.range.split("-");
+    var minRange = parseInt(range[0]);
+    var maxRange = parseInt(range[1]);
+    if (prachConfigurationIndex >= minRange && prachConfigurationIndex <= maxRange) {
+      DELTA_PREAMBLE = entry.deltaPreamble;
+      preambleFormat = entry.preambleFormat;
+      break;
+    }
+  }
+
+  // Calculate P_PRACH_target based on preambleReceivedTargetPower and DELTA_PREAMBLE
+  var P_PRACH_target = preambleReceivedTargetPower + DELTA_PREAMBLE + (rachAttempt - 1) * powerRampingStep;
+
+  // Calculate PRACH power
+  var PRACH_power = P_PRACH_target + pathloss;
+
+  // Display the result  
+  // （preambleReceivedTargetPower + DELTA_PREAMBLE + (RACH Attempt – 1) × powerRampingStep） + Pathloss ,  
+  // PRACH_power.toFixed(2) 的 .toFixed(2) 代表將四捨五入並保留兩位小數。
+  document.getElementById("calculation").innerHTML =
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PRACH power <br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = preambleReceivedTargetPower + DELTA_PREAMBLE + (RACH Attempt - 1) * powerRampingStep + pathloss <br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = " + preambleReceivedTargetPower + " + " + DELTA_PREAMBLE + " + (" + rachAttempt + " - 1) * " + powerRampingStep + " + " + pathloss + "<br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = " + PRACH_power.toFixed(2) + " dBm";}
+</script>
+</head>
+<body>
+<h1>PRACH Power Calculator</h1>
+<p style="margin: 0;">Author: Dustin_Chen, email: <a href="mailto:Dustin_Chen@compal.com" style="line-height: 1;">Dustin_Chen@compal.com</a> or <a href="mailto:chuhpsdustin@gmail.com" style="line-height: 1;">chuhpsdustin@gmail.com</a></p>	
+<br>
+<label><b>Please enter the following parameters, and then press Calculate to get the PRACH power</b><br></label>
+<label>&nbsp;&nbsp; > preambleReceivedTargetPower (from SIB1): <input type="number" id="preambleReceivedTargetPower" value="-60"></label><br>
+<label>&nbsp;&nbsp; > prach-ConfigurationIndex (from SIB1): <input type="number" id="prachConfigurationIndex" value="148"></label><br>
+<label>&nbsp;&nbsp; > μ (from SIB1 msg1-SubcarrierSpacing): <input type="number" id="μ" value="1"></label><br>
+<label>&nbsp;&nbsp; > RACH Attempt: <input type="number" id="rachAttempt" value="1"></label><br>
+<label>&nbsp;&nbsp; > powerRampingStep (from SIB1): <input type="number" id="powerRampingStep" value="2"></label><br>
+<label>&nbsp;&nbsp; > Pathloss (from ss-PBCH-BlockPower-RSRP): <input type="number" id="pathloss" value="34"></label><br>
+
+<button onclick="calculatePRACHPower()">Calculate</button>
+<p id="result"></p>
+<p id="calculation"></p>
+
+<pre>
+==============================================================================================================================
+Ref: 
+// 3GPP TS 38.321 chap 5.1.3  Random Access Preamble transmission
+// 3GPP TS 38.213 chap 7.4 Physical random access channel 
+// 3GPP TS 38.211 V16.2.0 Table 6.3.3.2-3: Random access configurations for FR1 and unpaired spectrum.  
+// 3GPP TS 38.321 Table 7.3-1: DELTA_PREAMBLE values for long preamble formats. (Preamble format 0~3)
+// 3GPP TS 38.321 Table 7.3-2: DELTA_PREAMBLE values for short preamble formats. (Preamble format A1/A2/A3/B1/B2/B3/B4/C0/C2)
+</pre>
+
+<table>
+  <tr>
+    <th>prach-ConfigurationIndex Range</th>
+    <th>Preamble Format</th>
+    <th>DELTA_PREAMBLE</th>
+  </tr>
+  <tr>
+    <td>0-27</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>28-33</td>
+    <td>1</td>
+    <td>-3</td>
+  </tr>
+  <tr>
+    <td>34-39</td>
+    <td>2</td>
+    <td>-6</td>
+  </tr>
+  <tr>
+    <td>40-66</td>
+    <td>3</td>
+    <td>0</td>
+  </tr>
+  <tr>
+    <td>67-86</td>
+    <td>A1</td>
+    <td>8 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>87-109</td>
+    <td>A2</td>
+    <td>5 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>110-132</td>
+    <td>A3</td>
+    <td>3 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>133-144</td>
+    <td>B1</td>
+    <td>8 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>145-168</td>
+    <td>B4</td>
+    <td>3 × μ</td>
+  </tr>
+  <tr>
+    <td>169-188</td>
+    <td>C0</td>
+    <td>11 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>189-210</td>
+    <td>C2</td>
+    <td>5 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>211-225</td>
+    <td>A1/B1</td>
+    <td>8 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>226-240</td>
+    <td>A2/B2</td>
+    <td>5 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>241-255</td>
+    <td>A3/B3</td>
+    <td>3 + 3 × μ</td>
+  </tr>
+  <tr>
+    <td>256-262</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+</table>
+
+<pre>
+==============================================================================================================================
+【Example】
+PPRACH power
+= P_PRACH,target + Pathloss
+= （preambleReceivedTargetPower + DELTA_PREAMBLE + (PREAMBLE_POWER_RAMPING_COUNTER – 1) × PREAMBLE_POWER_RAMPING_STEP） + （referenceSignalPower – higher layer filtered RSRP）
+= （preambleReceivedTargetPower + DELTA_PREAMBLE + (RACH Attempt – 1) × powerRampingStep） + （ss-PBCH-BlockPower – RSRP）
+= （-60 +  3×1 + （1-1）*2） + (-15 - (-49))
+= -23 dbm
+
+// RSRP=-49
+07:59:43.416	[0xB97F]	NR5G ML1 Searcher Measurement Database Update Ext
+      -----------------------------------------------------------------------------------------------------------------------------------------
+      |   |      |      |     |            |            |Detected Beams                                                                       |
+      |   |      |      |     |            |            |   |     |RX Beam Info           |NR2NR       |NR2NR       |L2NR        |L2NR        |
+      |   |      |PBCH  |Num  |Cell Quality|Cell Quality|   |SSB  |RX Beam|               |Filtered Tx |Filtered Tx |Filtered Tx |Filtered Tx |
+      |#  |PCI   |SFN   |Beams|RSRP        |RSRQ        |#  |Index|Id     |RSRP           |Beam RSRP L3|Beam RSRQ L3|Beam RSRP L3|Beam RSRQ L3|
+      -----------------------------------------------------------------------------------------------------------------------------------------
+      |  0|     1|   778|    1|     -49.461|     -10.445|  0|    0|     NA|        -49.461|     -49.461|     -10.445|          NA|          NA|
+      |   |      |      |     |            |            |   |     |     NA|        -51.133|            |            |            |            |
+
+// SIB1 prach-ConfigurationIndex=148
+1980/03/16 07:59:43.496	[0xB821]	BCCH_DL_SCH / SystemInformationBlockType1
+                  rach-ConfigGeneric 
+                  {
+                    prach-ConfigurationIndex 148, //format B4, DELTA_PREAMBLE = 3×μ。Ref: 38 321. Table 7.3-2: DELTA_PREAMBLE values for short preamble formats. 
+                    msg1-FDM one,
+                    msg1-FrequencyStart 0,
+                    zeroCorrelationZoneConfig 6,
+                    preambleReceivedTargetPower -60,
+                    preambleTransMax n10,
+                    powerRampingStep dB2,
+                    ra-ResponseWindow sl80
+                  },
+                  msg1-SubcarrierSpacing kHz30,//μ=1。
+          
+		  ss-PBCH-BlockPower -15 //referenceSignalPower=-15
+        },
+		
+// RSRP=-46
+07:59:43.614	[0xB97F]	NR5G ML1 Searcher Measurement Database Update Ext
+      -----------------------------------------------------------------------------------------------------------------------------------------
+      |   |      |      |     |            |            |Detected Beams                                                                       |
+      |   |      |      |     |            |            |   |     |RX Beam Info           |NR2NR       |NR2NR       |L2NR        |L2NR        |
+      |   |      |PBCH  |Num  |Cell Quality|Cell Quality|   |SSB  |RX Beam|               |Filtered Tx |Filtered Tx |Filtered Tx |Filtered Tx |
+      |#  |PCI   |SFN   |Beams|RSRP        |RSRQ        |#  |Index|Id     |RSRP           |Beam RSRP L3|Beam RSRQ L3|Beam RSRP L3|Beam RSRQ L3|
+      -----------------------------------------------------------------------------------------------------------------------------------------
+      |  0|     1|   804|    1|     -46.281|     -10.359|  0|    0|     NA|        -46.266|     -46.281|     -10.359|          NA|          NA|
+      |   |      |      |     |            |            |   |     |     NA|        -48.594|            |            |            |            |
+
+// (803,19) PRACH, Pathloss=(-15)-(-49)=34, PRACH Transmit Power = -23
+07:59:43.644	[0xB8D2]	NR5G LL1 FW MAC TX IU Power
+            System Frame Number = 803
+            Slot Number = 19
+         }
+         Power Info[0] {
+            Carrier Id = 0
+            Channel Type = PRACH
+            PRACH Data {
+               Transmit Power = -23 //PRACH Transmit Power = -23
+               RACH Attempt = 1
+               Pathloss = 34 // Pathloss = referenceSignalPower – higher layer filtered RSRP
+               PHR MTPL = 23
+               Minimum Power = -38
+            }
+</pre>			
+
+
+</body>
+</html>

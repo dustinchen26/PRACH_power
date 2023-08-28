@@ -1,3 +1,9 @@
+<!-- 
+  Copyright © [2023] [Dustin_Chen]. All rights reserved.
+  Author: Dustin Chen
+  Email:  Dustin_Chen@compal.com or chuhpsdustin@gmail.com
+-->  
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -84,7 +90,9 @@ function calculatePRACHPower() {
   // （preambleReceivedTargetPower + DELTA_PREAMBLE + (RACH Attempt – 1) × powerRampingStep） + Pathloss ,  
   // PRACH_power.toFixed(2) 的 .toFixed(2) 代表將四捨五入並保留兩位小數。
   document.getElementById("calculation").innerHTML =
-    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PRACH power <br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; P_PRACH <br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = PREAMBLE_RECEIVED_TARGET_POWER + PL <br>" +
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = preambleReceivedTargetPower + DELTA_PREAMBLE + (PREAMBLE_POWER_RAMPING_COUNTER – 1) × PREAMBLE_POWER_RAMPING_STEP + PL <br>" +
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = preambleReceivedTargetPower + DELTA_PREAMBLE + (RACH Attempt - 1) * powerRampingStep + pathloss <br>" +
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = " + preambleReceivedTargetPower + " + " + DELTA_PREAMBLE + " + (" + rachAttempt + " - 1) * " + powerRampingStep + " + " + pathloss + "<br>" +
     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = " + PRACH_power.toFixed(2) + " dBm";}
@@ -93,15 +101,35 @@ function calculatePRACHPower() {
 <body>
 <h1>PRACH Power Calculator</h1>
 <p style="margin: 0;">Author: Dustin_Chen, email: <a href="mailto:Dustin_Chen@compal.com" style="line-height: 1;">Dustin_Chen@compal.com</a> or <a href="mailto:chuhpsdustin@gmail.com" style="line-height: 1;">chuhpsdustin@gmail.com</a></p>	
-<br>
-<label><b>Please enter the following parameters, and then press Calculate to get the PRACH power</b><br></label>
-<label>&nbsp;&nbsp; > preambleReceivedTargetPower (from SIB1): <input type="number" id="preambleReceivedTargetPower" value="-60"></label><br>
-<label>&nbsp;&nbsp; > prach-ConfigurationIndex (from SIB1): <input type="number" id="prachConfigurationIndex" value="148"></label><br>
-<label>&nbsp;&nbsp; > μ (from SIB1 msg1-SubcarrierSpacing): <input type="number" id="μ" value="1"></label><br>
-<label>&nbsp;&nbsp; > RACH Attempt: <input type="number" id="rachAttempt" value="1"></label><br>
-<label>&nbsp;&nbsp; > powerRampingStep (from SIB1): <input type="number" id="powerRampingStep" value="2"></label><br>
-<label>&nbsp;&nbsp; > Pathloss (from ss-PBCH-BlockPower-RSRP): <input type="number" id="pathloss" value="34"></label><br>
+<pre>
+	// ETSI TS 138 213 chap 7.4 Physical random access channel
+		P_PRACH = min{P_CMAX, P_PRACH,target + PL} [dBm]
 
+	// ETSI TS 138 321 chap 5.1.3  Random Access Preamble transmission 
+		set PREAMBLE_RECEIVED_TARGET_POWER to preambleReceivedTargetPower + DELTA_PREAMBLE + (PREAMBLE_POWER_RAMPING_COUNTER – 1) × PREAMBLE_POWER_RAMPING_STEP; 
+</pre>
+<label><b>Enter the following parameters and press "Calculate" to get the PRACH power</b><br></label>
+    <ul>
+        <li>
+			<label>preambleReceivedTargetPower (from SIB1): <input type="number" id="preambleReceivedTargetPower" value="-60"></label><br>
+        </li>
+        <li>
+			<label>prach-ConfigurationIndex (from SIB1): <input type="number" id="prachConfigurationIndex" value="148"></label><br>
+        </li>
+        <li>
+			<label>μ (from SIB1 msg1-SubcarrierSpacing): <input type="number" id="μ" value="1"></label><br>
+        </li>
+        <li>
+			<label>RACH Attempt: <input type="number" id="rachAttempt" value="1"></label><br>
+        </li>
+        <li>
+			<label>powerRampingStep (from SIB1): <input type="number" id="powerRampingStep" value="2"></label><br>
+        </li>
+        <li>
+			<label>Pathloss (from ss-PBCH-BlockPower-RSRP): <input type="number" id="pathloss" value="34"></label><br>
+        </li>
+    </ul>
+	
 <button onclick="calculatePRACHPower()">Calculate</button>
 <p id="result"></p>
 <p id="calculation"></p>
@@ -220,7 +248,7 @@ PPRACH power
       |  0|     1|   778|    1|     -49.461|     -10.445|  0|    0|     NA|        -49.461|     -49.461|     -10.445|          NA|          NA|
       |   |      |      |     |            |            |   |     |     NA|        -51.133|            |            |            |            |
 
-// SIB1 prach-ConfigurationIndex=148
+// SIB1 prach-ConfigurationIndex=148, msg1-SubcarrierSpacing kHz30
 1980/03/16 07:59:43.496	[0xB821]	BCCH_DL_SCH / SystemInformationBlockType1
                   rach-ConfigGeneric 
                   {
